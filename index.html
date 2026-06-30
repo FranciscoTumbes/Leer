@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SlideVoice — PDF Presenter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- UPLOAD SCREEN -->
+<div id="upload-screen" class="screen active">
+  <div class="upload-bg">
+    <div class="bg-orb orb1"></div>
+    <div class="bg-orb orb2"></div>
+    <div class="bg-orb orb3"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <nav class="top-nav">
+    <div class="logo">
+      <span class="logo-icon">◈</span>
+      <span class="logo-text">SlideVoice</span>
+    </div>
+  </nav>
+
+  <div class="upload-hero">
+    <div class="hero-badge">PDF → Presentación Interactiva</div>
+    <h1 class="hero-title">
+      Convierte tu PDF<br>
+      <span class="gradient-text">en una presentación</span><br>
+      con voz
+    </h1>
+    <p class="hero-sub">Sube tu documento y genera automáticamente narración para cada diapositiva</p>
+
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".pdf" hidden>
+      <div class="upload-zone-inner">
+        <div class="upload-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <path d="M24 4L24 32M24 4L14 14M24 4L34 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 36V42H42V36" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="upload-label">Arrastra tu PDF aquí</p>
+        <p class="upload-sub">o haz clic para seleccionar</p>
+        <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+          Seleccionar archivo
+        </button>
+        <p class="upload-limit">Máximo 50 MB · Solo archivos PDF</p>
+      </div>
+    </div>
+
+    <!-- Voice settings -->
+    <div class="voice-settings">
+      <h3 class="settings-title">Configuración de Voz</h3>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <label>Voz</label>
+          <select id="voice-select" class="styled-select">
+            <option value="">Cargando voces...</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label>Idioma</label>
+          <select id="lang-select" class="styled-select">
+            <option value="es-ES">Español (España)</option>
+            <option value="es-MX">Español (México)</option>
+            <option value="es-US">Español (US)</option>
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="fr-FR">Français</option>
+            <option value="de-DE">Deutsch</option>
+            <option value="pt-BR">Português (BR)</option>
+            <option value="it-IT">Italiano</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label>Velocidad por defecto</label>
+          <select id="speed-select" class="styled-select">
+            <option value="0.75">0.75×</option>
+            <option value="1.0" selected>1.0×</option>
+            <option value="1.25">1.25×</option>
+            <option value="1.5">1.5×</option>
+            <option value="1.75">1.75×</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen" class="screen">
+  <div class="loading-content">
+    <div class="loading-logo">
+      <span class="logo-icon spin">◈</span>
+    </div>
+    <h2 class="loading-title">Procesando tu PDF</h2>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar" id="loading-bar"></div>
+    </div>
+    <p class="loading-status" id="loading-status">Cargando documento...</p>
+    <div class="loading-steps">
+      <div class="step" id="step-1">
+        <span class="step-dot"></span>
+        <span>Analizando páginas</span>
+      </div>
+      <div class="step" id="step-2">
+        <span class="step-dot"></span>
+        <span>Extrayendo texto</span>
+      </div>
+      <div class="step" id="step-3">
+        <span class="step-dot"></span>
+        <span>Preparando diapositivas</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRESENTATION SCREEN -->
+<div id="presentation-screen" class="screen">
+
+  <!-- TOP BAR -->
+  <header class="pres-header">
+    <div class="pres-logo">
+      <span class="logo-icon small">◈</span>
+      <span id="pres-filename" class="pres-filename">documento.pdf</span>
+    </div>
+    <div class="slide-counter">
+      <span id="current-slide-num">1</span>
+      <span class="counter-sep">/</span>
+      <span id="total-slides-num">1</span>
+    </div>
+    <div class="pres-actions">
+      <button class="icon-btn" id="edit-text-btn" title="Editar texto">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="upload-audio-btn" title="Subir audio personalizado">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="fullscreen-btn" title="Pantalla completa">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+      </button>
+      <button class="icon-btn danger" id="close-pres-btn" title="Cerrar presentación">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <main class="pres-main">
+    <!-- PREV BUTTON -->
+    <button class="nav-btn prev-btn" id="prev-btn" disabled>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+    </button>
+
+    <!-- SLIDE CONTAINER -->
+    <div class="slide-stage">
+      <div class="slide-wrap" id="slide-wrap">
+        <canvas id="pdf-canvas"></canvas>
+        <div class="slide-overlay" id="slide-overlay"></div>
+      </div>
+      <div class="slide-number-badge">
+        <span id="slide-badge-num">1</span>
+      </div>
+    </div>
+
+    <!-- NEXT BUTTON -->
+    <button class="nav-btn next-btn" id="next-btn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m9 18 6-6-6-6"/>
+      </svg>
+    </button>
+  </main>
+
+  <!-- THUMBNAIL STRIP -->
+  <div class="thumb-strip" id="thumb-strip"></div>
+
+  <!-- AUDIO PANEL -->
+  <div class="audio-panel" id="audio-panel">
+    <div class="audio-panel-inner">
+
+      <!-- LEFT: Voice info + text preview -->
+      <div class="audio-left">
+        <div class="voice-indicator">
+          <div class="voice-wave" id="voice-wave">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <span class="voice-name" id="voice-name-display">Sin voz</span>
+        </div>
+        <div class="slide-text-preview" id="slide-text-preview">
+          <span class="text-preview-content" id="text-preview-content">Cargando texto...</span>
+        </div>
+      </div>
+
+      <!-- CENTER: Main controls -->
+      <div class="audio-center">
+        <div class="main-controls">
+          <button class="ctrl-btn" id="stop-btn" title="Detener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+            </svg>
+          </button>
+          <button class="ctrl-btn play-btn" id="play-btn" title="Reproducir / Pausar">
+            <svg id="play-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <svg id="pause-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+              <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+            </svg>
+          </button>
+          <button class="ctrl-btn auto-btn" id="auto-btn" title="Modo Auto">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+              <line x1="19" y1="3" x2="19" y2="21"/>
+            </svg>
+            <span class="auto-label">AUTO</span>
+          </button>
+        </div>
+
+        <!-- Speed control -->
+        <div class="speed-control">
+          <span class="speed-label">Velocidad</span>
+          <div class="speed-pills">
+            <button class="speed-pill" data-speed="0.75">0.75×</button>
+            <button class="speed-pill active" data-speed="1.0">1×</button>
+            <button class="speed-pill" data-speed="1.25">1.25×</button>
+            <button class="speed-pill" data-speed="1.5">1.5×</button>
+            <button class="speed-pill" data-speed="1.75">1.75×</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Volume + extra -->
+      <div class="audio-right">
+        <div class="volume-control">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1" class="volume-slider">
+        </div>
+        <div class="auto-status" id="auto-status">
+          <span class="status-dot"></span>
+          <span id="auto-status-text">Manual</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- EDIT TEXT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Editar Texto de Narración</h3>
+      <span class="modal-slide-info" id="modal-slide-info">Diapositiva 1</span>
+      <button class="modal-close" id="modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-hint">El texto editado será usado para generar la narración de esta diapositiva.</p>
+      <textarea id="edit-textarea" class="edit-textarea" placeholder="Escribe el texto para narrar en esta diapositiva..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn secondary" id="modal-cancel">Cancelar</button>
+      <button class="modal-btn primary" id="modal-save">Guardar y Regenerar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM AUDIO MODAL -->
+<div class="modal-overlay" id="audio-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Subir Audio Personalizado</h3>
+      <span class="modal-slide-info" id="audio-modal-slide-info">Diapositiva 1</span>
+      <button class="modal-close" id="audio-modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-hint">Sube un archivo de audio para reemplazar la narración generada automáticamente.</p>
+      <div class="audio-upload-zone" id="audio-upload-zone">
+        <input type="file" id="audio-file-input" accept="audio/*" hidden>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+        <p>Arrastra un archivo de audio o <button onclick="document.getElementById('audio-file-input').click()">selecciona</button></p>
+        <small>MP3, WAV, OGG, M4A</small>
+      </div>
+      <div id="audio-preview-wrap" style="display:none">
+        <audio id="custom-audio-preview" controls style="width:100%;margin-top:12px;border-radius:8px;"></audio>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn secondary" id="audio-modal-cancel">Cancelar</button>
+      <button class="modal-btn primary" id="audio-modal-save">Usar este audio</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div class="toast" id="toast"></div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
